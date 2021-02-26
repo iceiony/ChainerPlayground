@@ -1,2 +1,5 @@
 .idea
 .ropeproject
+build
+.DS_store
+.clang_complete

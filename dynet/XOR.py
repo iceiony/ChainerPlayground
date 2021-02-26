@@ -12,42 +12,41 @@ def run_model():
 
 
     m = dy.Model()
-    sgd = dy.SimpleSGDTrainer(m, 1)
+    sgd = dy.SimpleSGDTrainer(m, 0.5)
 
-    pW = m.add_parameters((2, 2))
-    pb = m.add_parameters(2)
-    pV = m.add_parameters((1, 2))
-    pa = m.add_parameters(1)
+    W = m.add_parameters((2, 2))
+    b = m.add_parameters(2)
+
+    V = m.add_parameters((1, 2))
+    a = m.add_parameters(1)
 
     errors = []
     for iter in range(ITERATIONS):
         dy.renew_cg()
 
-        W = dy.parameter(pW)
-        b = dy.parameter(pb)
-        V = dy.parameter(pV)
-        a = dy.parameter(pa)
-
         x = dy.inputTensor(data_in, batched=True)
-        y = dy.inputTensor(data_out, batched=True)
+        y = dy.inputTensor(data_out)
 
-        h = dy.logistic((W*x) + b)
+        h = dy.logistic(W * x + b)
         y_pred = dy.logistic((V*h) + a)
+        y_pred = dy.reshape(y_pred, y.dim()[0])
         loss = dy.binary_log_loss(y_pred, y)
 
-        sum_loss = dy.sum_batches(loss) / 4 # pytorch devides by the number of records
-        errors.append(sum_loss.scalar_value())
-        sum_loss.backward()
+        errors.append(loss.scalar_value() / 4)
+        loss.backward()
         sgd.update()
     return errors
 
-f = open(OUTPUT_FILE,'w')
+#f = open(OUTPUT_FILE,'w')
 print("Training Error: ")
-for i in range(100):
+for i in range(1000):
     errors = run_model()
-    print(', '.join(map(str,errors)), file = f)
-    print(errors[-1])
-f.close()
+    #print(', '.join(map(str,errors)), file = f)
+    #print(errors[-1])
+    #if i % 10 == 1:
+    #    print( i , '%')
 
-plt.plot(errors)
-plt.savefig('error.png')
+#f.close()
+
+#plt.plot(errors)
+#plt.savefig('error.png')
